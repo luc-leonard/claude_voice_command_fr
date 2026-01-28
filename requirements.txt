@@ -1,0 +1,17 @@
+# Service vocal
+faster-whisper>=1.0.0
+numpy>=1.24
+
+# PulseAudio (pour WSL2/Linux)
+pulsectl>=24.0
+pulsectl-asyncio>=1.0
+
+# VAD - Silero (via torch hub)
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# MCP Server
+mcp>=1.0.0
+
+# Piper TTS (installé séparément via pip install piper-tts)
+# piper-tts>=1.2.0

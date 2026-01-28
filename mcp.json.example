@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "voice": {
+      "command": "/path/to/claude_voice_command/.venv/bin/python",
+      "args": ["-m", "claude_voice_command.mcp_server.server"],
+      "env": {
+        "PULSE_SERVER": "/mnt/wslg/PulseServer"
+      }
+    }
+  }
+}

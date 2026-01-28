@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claude-voice-command"
+version = "0.1.0"
+description = "Contrôle vocal pour Claude Code avec écoute continue"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Claude Voice Command"}
+]
+keywords = ["claude", "voice", "speech", "whisper", "piper", "mcp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "faster-whisper>=1.0.0",
+    "numpy>=1.24",
+    "pulsectl>=24.0",
+    "pulsectl-asyncio>=1.0",
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0",
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "black>=23.0",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+voice-mcp-server = "claude_voice_command.mcp_server.server:main"
+voice-service-test = "claude_voice_command.voice_service.main:main"
+
+[project.urls]
+Homepage = "https://github.com/claude-voice-command"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["claude_voice_command*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
