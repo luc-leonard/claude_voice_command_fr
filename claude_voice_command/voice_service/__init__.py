@@ -1,15 +1,17 @@
 """Service vocal pour Claude Code - écoute continue et synthèse vocale."""
 
 from .audio_capture import AudioCapture
-from .vad import VoiceActivityDetector
-from .transcriber import WhisperTranscriber
-from .synthesizer import PiperSynthesizer
+from .audio_player import AudioPlayer
 from .config import VoiceConfig
+from .synthesizer import PiperSynthesizer
+from .transcriber import WhisperTranscriber
+from .vad import VoiceActivityDetector
 
 __all__ = [
     "AudioCapture",
-    "VoiceActivityDetector",
-    "WhisperTranscriber",
+    "AudioPlayer",
     "PiperSynthesizer",
+    "VoiceActivityDetector",
     "VoiceConfig",
+    "WhisperTranscriber",
 ]

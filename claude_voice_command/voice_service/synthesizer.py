@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .audio_capture import AudioPlayer
+from .audio_player import AudioPlayer
 from .config import TTSVoice, VoiceConfig
 
 logger = logging.getLogger(__name__)

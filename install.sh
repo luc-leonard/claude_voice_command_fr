@@ -64,7 +64,7 @@ import os
 if os.path.exists('/mnt/wslg/PulseServer'):
     os.environ['PULSE_SERVER'] = '/mnt/wslg/PulseServer'
 
-from claude_voice_command.voice_service.audio_capture import PULSE_AVAILABLE
+from claude_voice_command.voice_service.pulse_bindings import PULSE_AVAILABLE
 from claude_voice_command.mcp_server.server import create_server
 
 print(f'PulseAudio: {\"OK\" if PULSE_AVAILABLE else \"NON DISPONIBLE\"}')
