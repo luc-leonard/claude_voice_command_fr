@@ -27,8 +27,10 @@ Contrôle vocal pour Claude Code avec écoute continue, transcription Whisper et
 
 - Python 3.11+
 - GPU NVIDIA avec CUDA (RTX 3090 recommandé, ~4 Go VRAM)
-- WSL2 avec WSLg (pour l'audio sous Windows)
+- PulseAudio
 - tmux
+
+> **Note :** Ce projet a été développé et testé uniquement sur WSL2 (Windows Subsystem for Linux) avec WSLg pour l'audio. Il devrait fonctionner sur Linux natif avec PulseAudio, mais cela n'a pas été testé. macOS et Windows natif ne sont pas supportés.
 
 ## Installation
 
@@ -197,4 +199,4 @@ tmux new -s claude
 
 ## Licence
 
-MIT
+GPL-3.0 - Voir le fichier [LICENSE](LICENSE) pour plus de détails.
