@@ -1,11 +1,13 @@
-"""Synthèse vocale avec Piper TTS."""
+"""Synthèse vocale avec Kyutai DSM-TTS 1.6B."""
 
+import asyncio
+import contextlib
 import logging
 import re
-import subprocess
-from pathlib import Path
+import sys
 
 import numpy as np
+import torch
 
 from .audio_player import AudioPlayer
 from .config import TTSVoice, VoiceConfig
@@ -75,82 +77,68 @@ def _prepare_text_for_tts(text: str) -> str:
 
     return result
 
-# URLs des modèles Piper
-PIPER_MODEL_URLS = {
-    TTSVoice.SIWIS: {
-        "model": "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx",
-        "config": "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json",
-    },
-    TTSVoice.GILLES: {
-        "model": "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/gilles/low/fr_FR-gilles-low.onnx",
-        "config": "https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/gilles/low/fr_FR-gilles-low.onnx.json",
-    },
-}
+
+@contextlib.contextmanager
+def _redirect_stdout_to_stderr():
+    """Redirige sys.stdout vers stderr pour éviter de polluer le protocole MCP stdio.
+
+    Note: on ne redirige PAS le fd 1 natif (os.dup2) car le transport MCP stdio
+    l'utilise pour ses réponses JSON-RPC.
+    """
+    old_stdout = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
 
 
-class PiperSynthesizer:
-    """Synthétiseur vocal utilisant Piper TTS."""
+class KyutaiSynthesizer:
+    """Synthétiseur vocal utilisant Kyutai DSM-TTS 1.6B."""
 
     def __init__(self, config: VoiceConfig):
         self.config = config
-        self._models_dir = config.models_dir / "piper"
-        self._models_dir.mkdir(parents=True, exist_ok=True)
-        self._voice: "PiperVoice | None" = None
-        self._current_voice_type: TTSVoice | None = None
+        self._tts_model = None
+        self._voice_cache: dict[str, object] = {}
+        self._sample_rate: int = 24000
 
-    def _get_model_paths(self, voice: TTSVoice) -> tuple[Path, Path]:
-        """Retourne les chemins du modèle et de sa config."""
-        model_path = self._models_dir / f"{voice.value}.onnx"
-        config_path = self._models_dir / f"{voice.value}.onnx.json"
-        return model_path, config_path
-
-    def _download_model(self, voice: TTSVoice) -> None:
-        """Télécharge le modèle Piper si nécessaire."""
-        model_path, config_path = self._get_model_paths(voice)
-
-        if model_path.exists() and config_path.exists():
+    def _load_model(self) -> None:
+        """Charge le modèle Kyutai (lazy loading)."""
+        if self._tts_model is not None:
             return
 
-        logger.info(f"Téléchargement du modèle Piper {voice.value}...")
+        with _redirect_stdout_to_stderr():
+            from moshi.models.loaders import CheckpointInfo
+            from moshi.models.tts import TTSModel
 
-        urls = PIPER_MODEL_URLS[voice]
-
-        # Télécharger le modèle
-        if not model_path.exists():
-            subprocess.run(
-                ["curl", "-L", "-o", str(model_path), urls["model"]],
-                check=True,
-                capture_output=True,
+            logger.info("Chargement du modèle Kyutai DSM-TTS 1.6B...")
+            checkpoint_info = CheckpointInfo.from_hf_repo("kyutai/tts-1.6b-en_fr")
+            self._tts_model = TTSModel.from_checkpoint_info(
+                checkpoint_info,
+                n_q=32,
+                temp=self.config.tts_temp,
+                device=self.config.tts_device,
+            )
+            self._sample_rate = self._tts_model.mimi.sample_rate
+            logger.info(
+                f"Modèle Kyutai chargé (device={self.config.tts_device}, "
+                f"sample_rate={self._sample_rate})"
             )
 
-        # Télécharger la config
-        if not config_path.exists():
-            subprocess.run(
-                ["curl", "-L", "-o", str(config_path), urls["config"]],
-                check=True,
-                capture_output=True,
+    def _get_condition_attributes(self, voice: TTSVoice):
+        """Retourne les condition_attributes pour une voix, avec cache."""
+        voice_key = voice.value
+        if voice_key not in self._voice_cache:
+            self._load_model()
+            voice_path = self._tts_model.get_voice_path(voice.value)
+            self._voice_cache[voice_key] = self._tts_model.make_condition_attributes(
+                [voice_path], cfg_coef=self.config.tts_cfg_coef
             )
-
-        logger.info(f"Modèle Piper {voice.value} téléchargé")
-
-    def _load_voice(self, voice: TTSVoice) -> None:
-        """Charge le modèle de voix."""
-        if self._current_voice_type == voice and self._voice is not None:
-            return
-
-        self._download_model(voice)
-        model_path, _ = self._get_model_paths(voice)
-
-        from piper import PiperVoice
-
-        logger.info(f"Chargement du modèle Piper {voice.value}...")
-        self._voice = PiperVoice.load(str(model_path), use_cuda=False)
-        self._current_voice_type = voice
-        logger.info(f"Modèle Piper {voice.value} chargé")
+            logger.info(f"Voice state cachée: {voice_key}")
+        return self._voice_cache[voice_key]
 
     def set_voice(self, voice: TTSVoice) -> None:
         """Change la voix TTS."""
-        self._load_voice(voice)
         self.config.tts_voice = voice
         logger.info(f"Voix TTS changée: {voice.value}")
 
@@ -167,30 +155,33 @@ class PiperSynthesizer:
         if not text.strip():
             return None
 
-        voice = self.config.tts_voice
-        self._load_voice(voice)
+        self._load_model()
 
         # Préparer le texte avec les prononciations correctes
         prepared_text = _prepare_text_for_tts(text)
         logger.debug(f"Texte préparé: '{prepared_text[:100]}'")
 
         try:
-            # Synthétiser avec Piper
-            audio_chunks = []
-            for chunk in self._voice.synthesize(prepared_text):
-                # Convertir int16 en float32
-                audio_int16 = chunk.audio_int16_array
-                audio_float32 = audio_int16.astype(np.float32) / 32768.0
-                audio_chunks.append(audio_float32)
+            with _redirect_stdout_to_stderr():
+                voice = self.config.tts_voice
+                condition_attributes = self._get_condition_attributes(voice)
 
-            if not audio_chunks:
-                return None
+                entries = self._tts_model.prepare_script([prepared_text], padding_between=1)
+                result = self._tts_model.generate([entries], [condition_attributes])
 
-            # Concaténer tous les chunks
-            audio = np.concatenate(audio_chunks)
+                # Décodage frames → PCM float32
+                pcms = []
+                with self._tts_model.mimi.streaming(1), torch.no_grad():
+                    for frame in result.frames[self._tts_model.delay_steps:]:
+                        pcm = self._tts_model.mimi.decode(frame[:, 1:, :]).cpu().numpy()
+                        pcms.append(np.clip(pcm[0, 0], -1, 1))
+
+                if not pcms:
+                    return None
+
+                audio = np.concatenate(pcms).astype(np.float32)
 
             logger.debug(f"Synthèse: '{text[:50]}...' ({len(audio)} samples)")
-
             return audio
 
         except Exception as e:
@@ -199,10 +190,8 @@ class PiperSynthesizer:
 
     @property
     def sample_rate(self) -> int:
-        """Retourne le sample rate de la voix chargée."""
-        if self._voice is not None:
-            return self._voice.config.sample_rate
-        return 22050  # Défaut Piper
+        """Retourne le sample rate du modèle (24000 Hz)."""
+        return self._sample_rate
 
     def speak(self, text: str) -> bool:
         """
@@ -235,7 +224,8 @@ class PiperSynthesizer:
         Returns:
             True si succès
         """
-        audio = self.synthesize(text)
+        loop = asyncio.get_running_loop()
+        audio = await loop.run_in_executor(None, self.synthesize, text)
         if audio is None:
             return False
 

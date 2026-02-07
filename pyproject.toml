@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [
     {name = "Claude Voice Command"}
 ]
-keywords = ["claude", "voice", "speech", "whisper", "piper", "mcp"]
+keywords = ["claude", "voice", "speech", "whisper", "kyutai", "mcp"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -27,8 +27,9 @@ dependencies = [
     "numpy>=1.24",
     "pulsectl>=24.0",
     "pulsectl-asyncio>=1.0",
-    "torch>=2.0.0",
-    "torchaudio>=2.0.0",
+    "moshi>=0.2.11",
+    "torch>=2.5.0",
+    "torchaudio>=2.5.0",
     "mcp>=1.0.0",
 ]
 

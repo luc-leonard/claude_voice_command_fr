@@ -16,12 +16,22 @@ fi
 PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo "Python version: $PYTHON_VERSION"
 
-# Vérifier CUDA
+# Vérifier CUDA (requis pour Kyutai DSM-TTS)
 if command -v nvidia-smi &> /dev/null; then
     echo "CUDA disponible:"
     nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+
+    # Vérifier la VRAM disponible (Kyutai DSM-TTS nécessite ~8-12 Go)
+    VRAM_MB=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -1 | tr -d ' ')
+    if [ "$VRAM_MB" -lt 8000 ]; then
+        echo "Attention: VRAM insuffisante (${VRAM_MB} Mo). Kyutai DSM-TTS nécessite ~8-12 Go de VRAM."
+        echo "Le modèle pourrait ne pas se charger correctement."
+    else
+        echo "VRAM suffisante (${VRAM_MB} Mo) pour Kyutai DSM-TTS."
+    fi
 else
-    echo "Attention: CUDA non détecté. Whisper sera plus lent sur CPU."
+    echo "ERREUR: CUDA non détecté. Kyutai DSM-TTS nécessite un GPU NVIDIA avec CUDA."
+    echo "Whisper fonctionnera sur CPU mais sera plus lent."
 fi
 
 # Vérifier WSLg
@@ -51,9 +61,7 @@ fi
 echo "Installation des dépendances Python..."
 pip install -e "$SCRIPT_DIR"
 
-# Installer Piper TTS
-echo "Installation de Piper TTS..."
-pip install piper-tts
+# moshi (Kyutai DSM-TTS) est installé automatiquement via pyproject.toml
 
 # Vérifier l'installation
 echo ""

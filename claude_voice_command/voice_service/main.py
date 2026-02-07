@@ -13,7 +13,7 @@ if os.path.exists("/mnt/wslg/PulseServer"):
 
 from .audio_capture import AudioCapture
 from .config import TTSVoice, VoiceConfig
-from .synthesizer import PiperSynthesizer
+from .synthesizer import KyutaiSynthesizer
 from .transcriber import TranscriptionResult, WhisperTranscriber
 from .vad import SpeechState, VoiceActivityDetector
 
@@ -46,7 +46,7 @@ class VoiceService:
         self._audio = AudioCapture(self.config)
         self._vad = VoiceActivityDetector(self.config)
         self._transcriber = WhisperTranscriber(self.config)
-        self._synthesizer = PiperSynthesizer(self.config)
+        self._synthesizer = KyutaiSynthesizer(self.config)
 
         self._state = ServiceState.STOPPED
         self._last_transcription: str | None = None

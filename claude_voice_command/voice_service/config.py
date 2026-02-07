@@ -6,9 +6,11 @@ from pathlib import Path
 
 
 class TTSVoice(Enum):
-    """Voix TTS disponibles."""
-    SIWIS = "fr_FR-siwis-medium"      # Voix féminine
-    GILLES = "fr_FR-gilles-low"       # Voix masculine
+    """Voix TTS disponibles (Kyutai DSM-TTS, voix cml-tts/fr CC-BY-4.0)."""
+    FEMININE_1 = "cml-tts/fr/2216_1745_000007-0001_enhanced.wav"
+    FEMININE_2 = "cml-tts/fr/10087_11650_000028-0002_enhanced.wav"
+    MASCULINE_1 = "cml-tts/fr/296_1028_000022-0001_enhanced.wav"
+    MASCULINE_2 = "cml-tts/fr/1406_1028_000009-0003_enhanced.wav"
 
 
 @dataclass
@@ -34,12 +36,11 @@ class VoiceConfig:
     whisper_beam_size: int = 5
     whisper_vad_filter: bool = True
 
-    # Piper TTS
-    tts_voice: TTSVoice = field(default=TTSVoice.SIWIS)
-    tts_speaker_id: int = 0
-    tts_length_scale: float = 1.0  # Vitesse (< 1 = plus rapide)
-    tts_noise_scale: float = 0.667
-    tts_noise_w: float = 0.8
+    # Kyutai DSM-TTS
+    tts_voice: TTSVoice = field(default=TTSVoice.FEMININE_1)
+    tts_device: str = "cuda"
+    tts_temp: float = 0.6
+    tts_cfg_coef: float = 2.0
 
     # Chemins
     models_dir: Path = field(default_factory=lambda: Path.home() / ".cache" / "voice_models")
