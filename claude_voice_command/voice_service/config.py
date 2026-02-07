@@ -9,8 +9,12 @@ class TTSVoice(Enum):
     """Voix TTS disponibles (Kyutai DSM-TTS, voix cml-tts/fr CC-BY-4.0)."""
     FEMININE_1 = "cml-tts/fr/2216_1745_000007-0001.wav"
     FEMININE_2 = "cml-tts/fr/10087_11650_000028-0002.wav"
+    FEMININE_3 = "cml-tts/fr/579_2548_000015-0001.wav"
     MASCULINE_1 = "cml-tts/fr/296_1028_000022-0001.wav"
     MASCULINE_2 = "cml-tts/fr/1406_1028_000009-0003.wav"
+    MASCULINE_3 = "cml-tts/fr/4193_3103_000004-0001.wav"
+    MASCULINE_4 = "cml-tts/fr/9834_9697_000150-0003.wav"
+    MASCULINE_CANADIEN = "cml-tts/fr/2114_1656_000053-0001.wav"
 
 
 @dataclass
@@ -37,7 +41,7 @@ class VoiceConfig:
     whisper_vad_filter: bool = True
 
     # Kyutai DSM-TTS
-    tts_voice: TTSVoice = field(default=TTSVoice.FEMININE_1)
+    tts_voice: TTSVoice = field(default=TTSVoice.MASCULINE_2)
     tts_device: str = "cuda"
     tts_temp: float = 0.6
     tts_cfg_coef: float = 2.0

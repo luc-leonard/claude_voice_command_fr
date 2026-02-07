@@ -114,8 +114,8 @@ def create_server() -> Server:
                     "properties": {
                         "voice": {
                             "type": "string",
-                            "description": "Nom de la voix: 'feminine_1', 'feminine_2', 'masculine_1', 'masculine_2'.",
-                            "enum": ["feminine_1", "feminine_2", "masculine_1", "masculine_2"],
+                            "description": "Nom de la voix: " + ", ".join(f"'{v.name.lower()}'" for v in TTSVoice) + ".",
+                            "enum": [v.name.lower() for v in TTSVoice],
                         },
                     },
                     "required": ["voice"],
@@ -184,20 +184,13 @@ def create_server() -> Server:
 
             elif name == "voice_set_voice":
                 voice_name = arguments.get("voice", "").lower()
-                voice_map = {
-                    "feminine_1": TTSVoice.FEMININE_1,
-                    "feminine_2": TTSVoice.FEMININE_2,
-                    "masculine_1": TTSVoice.MASCULINE_1,
-                    "masculine_2": TTSVoice.MASCULINE_2,
-                }
+                voice_map = {v.name.lower(): v for v in TTSVoice}
 
                 if voice_name not in voice_map:
+                    valid = ", ".join(f"'{k}'" for k in voice_map)
                     return [TextContent(
                         type="text",
-                        text=(
-                            f"Erreur: voix inconnue '{voice_name}'. "
-                            "Utilisez 'feminine_1', 'feminine_2', 'masculine_1' ou 'masculine_2'."
-                        ),
+                        text=f"Erreur: voix inconnue '{voice_name}'. Utilisez {valid}.",
                     )]
 
                 service.set_voice(voice_map[voice_name])
