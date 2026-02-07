@@ -7,10 +7,10 @@ from pathlib import Path
 
 class TTSVoice(Enum):
     """Voix TTS disponibles (Kyutai DSM-TTS, voix cml-tts/fr CC-BY-4.0)."""
-    FEMININE_1 = "cml-tts/fr/2216_1745_000007-0001_enhanced.wav"
-    FEMININE_2 = "cml-tts/fr/10087_11650_000028-0002_enhanced.wav"
-    MASCULINE_1 = "cml-tts/fr/296_1028_000022-0001_enhanced.wav"
-    MASCULINE_2 = "cml-tts/fr/1406_1028_000009-0003_enhanced.wav"
+    FEMININE_1 = "cml-tts/fr/2216_1745_000007-0001.wav"
+    FEMININE_2 = "cml-tts/fr/10087_11650_000028-0002.wav"
+    MASCULINE_1 = "cml-tts/fr/296_1028_000022-0001.wav"
+    MASCULINE_2 = "cml-tts/fr/1406_1028_000009-0003.wav"
 
 
 @dataclass
